@@ -72,6 +72,13 @@ class StockAnalyzer:
                 elif tend_ant == "Alta" and tend_at == "Baixa" and abertura > anterior['Close'] and fecho < anterior['Open']:
                     padrao = "Engolfo de Baixa"
 
+                confianca = "Baixa"
+                if padrao != "Nenhum padrão claro":
+                    if volume > anterior['Volume']:
+                        confianca = "Alta"
+                    else:
+                        confianca = "Média"
+
                 all_tech_data.append({
                     "ticker": ticker,
                     "fecho": round(fecho, 2),
@@ -79,7 +86,8 @@ class StockAnalyzer:
                     "min": round(minimo, 2),
                     "vol": int(volume),
                     "direcao": tend_at,
-                    "padrao": padrao
+                    "padrao": padrao,
+                    "confianca": confianca
                 })
             except Exception as e:
                 final_results.append({"ticker": ticker, "error": str(e)})
@@ -89,21 +97,23 @@ class StockAnalyzer:
 
         # 2. Prepare the bulk prompt
         tech_summary = "\n".join([
-            f"- {d['ticker']}: Fecho R${d['fecho']}, Máx R${d['max']}, Mín R${d['min']}, Vol {d['vol']:,}, Padrão: {d['padrao']}"
+            f"- {d['ticker']}: Fecho R${d['fecho']}, Máx R${d['max']}, Mín R${d['min']}, Vol {d['vol']:,}, Padrão: {d['padrao']}, Classe Confiança: {d['confianca']}"
             for d in all_tech_data
         ])
 
         prompt = f"""
         És um analista de {trade_type.capitalize()} Trade especializado. 
         Analisa os seguintes ativos da B3 de uma só vez. 
-        Dados Técnicos:
+        Dados Técnicos (Obrigatórios e Inquestionáveis):
         {tech_summary}
 
         Para CADA ativo, gera um relatório curto seguindo as teorias de Flávio Lemos e Debastiani.
         Formato de Resposta Obrigatório para cada ativo:
         --- ATIVO: [TICKER] ---
-        [Texto da análise aqui...]
+        Grau de Confiança: [Inserir EXATAMENTE a 'Classe Confiança' passada acima]
+        [Texto da análise justificando...]
         
+        REGRA RIGOROSA: NUNCA crie uma confiança diferente daquela fornecida em 'Classe Confiança'. Se for 'Baixa', justifique por que não há padrão ou volume. Se for 'Média/Alta', elabore sobre o setup.
         Se a confiança for Média ou Alta:
         [[STOP_MOVEL_DATA]]
         Ativo: [TickerF]
@@ -122,7 +132,10 @@ class StockAnalyzer:
         max_retries = 3
         for attempt in range(max_retries):
             try:
-                resposta = self.modelo.generate_content(prompt)
+                resposta = self.modelo.generate_content(
+                    prompt, 
+                    generation_config=genai.types.GenerationConfig(temperature=0.0)
+                )
                 full_text = resposta.text
                 
                 # 4. Parse the bulk response back into the results list

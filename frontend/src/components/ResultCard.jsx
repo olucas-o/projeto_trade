@@ -7,10 +7,10 @@ const ResultCard = ({ result }) => {
 
   if (result.error) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="card" 
+        className="card"
         style={{ borderColor: 'var(--accent-danger)', marginBottom: '1.5rem' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--accent-danger)' }}>
@@ -55,22 +55,23 @@ const ResultCard = ({ result }) => {
   const stopMovel = parseStopMovelData(result.analise);
   const cleanText = cleanAnalysisText(result.analise);
   const confidence = getConfidenceLevel(result.analise);
+  const isConfiavel = confidence === 'Alta' || confidence === 'Média';
   const badgeClass = confidence === 'Alta' ? 'badge-success' : confidence === 'Média' ? 'badge-warning' : 'badge-danger';
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       layout
-      className="card" 
+      className="card"
       style={{ marginBottom: '1.5rem', overflow: 'hidden' }}
     >
-      <div 
+      <div
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
         onClick={() => setIsOpen(!isOpen)}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{ 
+          <div style={{
             background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)',
             padding: '0.75rem',
             borderRadius: '12px',
@@ -104,9 +105,9 @@ const ResultCard = ({ result }) => {
                 <h4 style={{ color: 'var(--accent-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Info size={18} /> Análise da IA
                 </h4>
-                <div style={{ 
-                  color: 'var(--text-primary)', 
-                  lineHeight: '1.6', 
+                <div style={{
+                  color: 'var(--text-primary)',
+                  lineHeight: '1.6',
                   fontSize: '1rem',
                   whiteSpace: 'pre-wrap',
                   backgroundColor: 'rgba(255,255,255,0.03)',
@@ -119,14 +120,14 @@ const ResultCard = ({ result }) => {
                 </div>
               </div>
 
-              {stopMovel && (
+              {stopMovel && isConfiavel && (
                 <div style={{ marginBottom: '2rem' }}>
                   <h4 style={{ color: 'var(--accent-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <CreditCard size={18} /> Aba Stop Móvel (Campos para Preencher)
+                    <CreditCard size={18} /> Stop Móvel (Como os campos do Home Broker devem estar preenchidos)
                   </h4>
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
                     gap: '1rem',
                     background: 'rgba(16, 185, 129, 0.05)',
                     padding: '1.5rem',
@@ -136,10 +137,10 @@ const ResultCard = ({ result }) => {
                     {Object.entries(stopMovel).map(([key, value]) => (
                       <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>{key}</span>
-                        <div style={{ 
-                          background: 'var(--bg-secondary)', 
-                          padding: '0.75rem', 
-                          borderRadius: '8px', 
+                        <div style={{
+                          background: 'var(--bg-secondary)',
+                          padding: '0.75rem',
+                          borderRadius: '8px',
                           border: '1px solid var(--glass-border)',
                           color: '#fff',
                           fontWeight: '600',

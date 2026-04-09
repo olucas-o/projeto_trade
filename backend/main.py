@@ -5,6 +5,10 @@ from pydantic import BaseModel
 from typing import List
 import os
 import asyncio
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
 
 app = FastAPI(title="SaaS Trade Analyzer API")
 
@@ -17,8 +21,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Harcoded API Key for now or use environment
-API_KEY = "AIzaSyDrXVO0DE6tBf65itjLRuevKQz4W1f6Up4"
+# Chave de API carregada com segurança via variável de ambiente
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not API_KEY:
+    print("ERRO: A variável de ambiente GEMINI_API_KEY não foi encontrada.")
+    print("Certifique-se de que o arquivo .env existe e contém a chave correta.")
+    import sys
+    sys.exit(1)
+
 analyzer = StockAnalyzer(api_key=API_KEY)
 
 class AnalysisRequest(BaseModel):

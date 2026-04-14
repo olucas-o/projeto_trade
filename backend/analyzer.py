@@ -1,15 +1,39 @@
 import yfinance as yf
-import pandas as pd
 import google.generativeai as genai
 import asyncio
-import os
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 class StockAnalyzer:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        genai.configure(api_key=self.api_key)
-        self.modelo = self._get_model()
+    def __init__(self, api_keys: List[str]):
+        if not api_keys:
+            raise ValueError("Pelo menos uma API key deve ser fornecida.")
+        self.api_keys = api_keys
+        self.current_key_idx = 0
+        self._init_model()
+
+    def _init_model(self):
+        while self.current_key_idx < len(self.api_keys):
+            try:
+                genai.configure(api_key=self.api_keys[self.current_key_idx])
+                self.modelo = self._get_model()
+                return
+            except Exception as e:
+                error_msg = str(e).lower()
+                if "429" in error_msg or "quota" in error_msg or "permission" in error_msg or "403" in error_msg:
+                    print(f"Erro ao inicializar com a chave {self.current_key_idx + 1}. Tentando a próxima...")
+                    self.current_key_idx += 1
+                else:
+                    raise e
+        raise Exception("Nenhuma das chaves de API fornecidas é válida ou possui quota.")
+
+    def _switch_key(self) -> bool:
+        """Muda para a próxima chave da lista. Retorna True se conseguiu, False se esgotaram."""
+        self.current_key_idx += 1
+        if self.current_key_idx < len(self.api_keys):
+            print(f"Chave esgotada. Trocando para a chave API {self.current_key_idx + 1}...")
+            self._init_model()
+            return True
+        return False
 
     def _get_model(self):
         modelo_valido = None
@@ -32,7 +56,17 @@ class StockAnalyzer:
         """
         Analyses multiple stock tickers in ONE single IA request to save quota.
         """
-        period = "6mo" if trade_type == "swing" else "2mo"
+        if trade_type == "day":
+            period = "5d"
+            interval = "15m"
+            contexto_operacional = "Foco explícito em operações INTRADIÁRIAS (abrir e fechar no mesmo dia). Avalie a volatilidade de curtíssimo prazo e alvos curtos."
+            nome_tempo_grafico = "15 Minutos"
+        else: # swing
+            period = "6mo"
+            interval = "1d"
+            contexto_operacional = "Foco explícito em SWING TRADE (carregar posições por dias ou poucas semanas). Avalie a tendência principal de curto a médio prazo."
+            nome_tempo_grafico = "Diário"
+
         all_tech_data = []
         final_results = []
 
@@ -40,7 +74,7 @@ class StockAnalyzer:
         for ticker in tickers:
             try:
                 acao = yf.Ticker(ticker)
-                dados = acao.history(period=period, interval="1d")
+                dados = acao.history(period=period, interval=interval)
                 
                 if dados.empty or len(dados) < 2:
                     final_results.append({"ticker": ticker, "error": f"Dados insuficientes para {ticker}."})
@@ -102,18 +136,19 @@ class StockAnalyzer:
         ])
 
         prompt = f"""
-        És um analista de {trade_type.capitalize()} Trade especializado. 
-        Analisa os seguintes ativos da B3 de uma só vez. 
+        És um analista de {trade_type.upper()} TRADE especializado. 
+        {contexto_operacional}
+        Tempo Gráfico Base: {nome_tempo_grafico}
+        Analise os seguintes ativos da B3 de uma só vez. 
         Dados Técnicos (Obrigatórios e Inquestionáveis):
         {tech_summary}
 
-        Para CADA ativo, gera um relatório curto seguindo as teorias de Flávio Lemos e Debastiani.
+        Para CADA ativo, gera um relatório curto seguindo as teorias de Flávio Lemos e Debastiani adaptadas para este tipo de operação.
         Formato de Resposta Obrigatório para cada ativo:
         --- ATIVO: [TICKER] ---
-        Grau de Confiança: [Inserir EXATAMENTE a 'Classe Confiança' passada acima]
-        [Texto da análise justificando...]
+        [Texto da análise justificando a 'Classe Confiança' e contextualizando a decisão...]
         
-        REGRA RIGOROSA: NUNCA crie uma confiança diferente daquela fornecida em 'Classe Confiança'. Se for 'Baixa', justifique por que não há padrão ou volume. Se for 'Média/Alta', elabore sobre o setup.
+        REGRA RIGOROSA: Baseie sua justificativa APENAS na 'Classe Confiança' fornecida. Se for 'Baixa', explique a ineficiência do cenário no contexto de {trade_type} trade. Se for 'Média/Alta', elabore sobre a estratégia de entrada e saída.
         Se a confiança for Média ou Alta:
         [[STOP_MOVEL_DATA]]
         Ativo: [TickerF]
@@ -128,9 +163,10 @@ class StockAnalyzer:
         Regras de Stop Móvel: Usar Mínima para Stop Loss de Compra e Máxima para Venda. 10 centavos de folga para o Prç Limite. O 'Início' é Entrada + Risco (Compra) ou Entrada - Risco (Venda). O 'Ajuste' é Risco / 2.
         """
 
-        # 3. Call IA with Retry logic (just in case even the single request 429s)
+        # 3. Call IA with Retry e Multiple Keys logic
         max_retries = 3
-        for attempt in range(max_retries):
+        attempt = 0
+        while attempt < max_retries:
             try:
                 resposta = self.modelo.generate_content(
                     prompt, 
@@ -151,6 +187,7 @@ class StockAnalyzer:
                             "fecho": data['fecho'],
                             "volume": data['vol'],
                             "padrao": data['padrao'],
+                            "confianca": data['confianca'],
                             "analise": report
                         })
                     except:
@@ -160,8 +197,21 @@ class StockAnalyzer:
                         })
                 break # Success, exit retry loop
             except Exception as e:
-                if "429" in str(e) and attempt < max_retries - 1:
-                    await asyncio.sleep(25 * (attempt + 1)) # Wait and retry
+                error_msg = str(e).lower()
+                if "429" in error_msg or "quota" in error_msg or "exhausted" in error_msg:
+                    # Esgotou quota ou tomou limite de taxa
+                    if self._switch_key():
+                        print(f"Chave falhou (429/quota). Tentando com nova chave...")
+                        continue # Tenta de novo sem incrementar tentativa global
+                    elif attempt < max_retries - 1:
+                        # Todas as chaves esgotadas, mas ainda resta retry global (se for um ratelimit comum)
+                        print(f"Todas as chaves falharam. Tentativa {attempt + 1} de {max_retries}. Aguardando...")
+                        await asyncio.sleep(25 * (attempt + 1))
+                        attempt += 1
+                    else:
+                        for data in all_tech_data:
+                            final_results.append({"ticker": data['ticker'], "error": f"Erro na IA (limites esgotados): {str(e)}"})
+                        break
                 else:
                     for data in all_tech_data:
                         final_results.append({"ticker": data['ticker'], "error": f"Erro na IA: {str(e)}"})

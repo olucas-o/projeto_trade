@@ -24,11 +24,7 @@ const ResultCard = ({ result }) => {
     );
   }
 
-  const getConfidenceLevel = (text) => {
-    if (text.toLowerCase().includes('alta')) return 'Alta';
-    if (text.toLowerCase().includes('média')) return 'Média';
-    return 'Baixa';
-  };
+
 
   const parseStopMovelData = (text) => {
     const regex = /\[\[STOP_MOVEL_DATA\]\]([\s\S]*?)\[\[END_STOP_MOVEL_DATA\]\]/;
@@ -54,7 +50,7 @@ const ResultCard = ({ result }) => {
 
   const stopMovel = parseStopMovelData(result.analise);
   const cleanText = cleanAnalysisText(result.analise);
-  const confidence = getConfidenceLevel(result.analise);
+  const confidence = result.confianca || 'Baixa';
   const isConfiavel = confidence === 'Alta' || confidence === 'Média';
   const badgeClass = confidence === 'Alta' ? 'badge-success' : confidence === 'Média' ? 'badge-warning' : 'badge-danger';
 

@@ -1,10 +1,8 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from analyzer import StockAnalyzer
 from pydantic import BaseModel
-from typing import List
 import os
-import asyncio
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente do arquivo .env
@@ -12,25 +10,29 @@ load_dotenv()
 
 app = FastAPI(title="SaaS Trade Analyzer API")
 
-# Enable CORS
+# Enable CORS (Seguro para produção)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Chave de API carregada com segurança via variável de ambiente
-API_KEY = os.getenv("GEMINI_API_KEY")
+# Chaves de API carregadas com segurança via variáveis de ambiente
+API_KEY_1 = os.getenv("GEMINI_API_KEY_1") or os.getenv("GEMINI_API_KEY")
+API_KEY_2 = os.getenv("GEMINI_API_KEY_2")
+API_KEY_3 = os.getenv("GEMINI_API_KEY_3")
 
-if not API_KEY:
-    print("ERRO: A variável de ambiente GEMINI_API_KEY não foi encontrada.")
-    print("Certifique-se de que o arquivo .env existe e contém a chave correta.")
+api_keys = [k for k in [API_KEY_1, API_KEY_2, API_KEY_3] if k]
+
+if not api_keys:
+    print("ERRO: Nenhuma variável de ambiente GEMINI_API_KEY encontrada.")
+    print("Certifique-se de que o arquivo .env existe e contém pelo menos uma chave.")
     import sys
     sys.exit(1)
 
-analyzer = StockAnalyzer(api_key=API_KEY)
+analyzer = StockAnalyzer(api_keys=api_keys)
 
 class AnalysisRequest(BaseModel):
     tickers: str

@@ -36,7 +36,17 @@ const App = () => {
             }
 
             const data = await response.json();
-            setResults(data.results);
+
+            const hasQuotaError = data.results && data.results.some(r =>
+                r.error && (r.error.toLowerCase().includes('limites esgotados') || r.error.toLowerCase().includes('todas as chaves de api') || r.error.includes('429'))
+            );
+
+            if (hasQuotaError) {
+                setError("Aviso de Portfólio: Este projeto foi desenvolvido para fins de demonstração. Por conta disso, possui APIs limitadas cujas chaves de acesso já foram totalmente esgotadas. Não há investimento alocado para prover acessos ilimitados de IA. Tente novamente no próximo ciclo comercial.");
+                setResults([]);
+            } else {
+                setResults(data.results);
+            }
         } catch (err) {
             setError(err.message);
         } finally {
@@ -104,7 +114,7 @@ const App = () => {
                                 <Zap size={14} /> Gemini Flash 2.5
                             </span>
                         </div>
-                        <h1>A Análise Técnica <br /> Elevada pela Inteligência</h1>
+                        <h1>IA Especialista em Ações</h1>
                         <p style={{
                             color: 'var(--text-secondary)',
                             fontSize: '1.25rem',
@@ -112,7 +122,7 @@ const App = () => {
                             margin: '0 auto 3rem',
                             lineHeight: '1.6'
                         }}>
-                            Obtenha relatórios detalhados com base nos fundamentos de <strong style={{ color: '#fff' }}>Carlos Alberto Debastiani</strong> e <strong style={{ color: '#fff' }}>Flávio Lemos</strong> num piscar de olhos.
+                            Envie os seus ativos e deixe a IA rastrear os gráficos. Receba recomendações precisas baseadas estritamente na validação de padrões de <strong style={{ color: '#fff' }}>Debastiani</strong> e na gestão de risco de <strong style={{ color: '#fff' }}>Flávio Lemos</strong>.
                         </p>
 
                         <div className="card" style={{ maxWidth: '800px', margin: '0 auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>

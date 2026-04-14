@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Info, TrendingUp, BarChart3, CreditCard, User, Bell, ChevronLeft, ChevronRight, Share2, MoreVertical, Globe, Calendar, Clock, DollarSign, PieChart, LayoutDashboard, LayoutGrid, List, Filter, RefreshCw, Send, BrainCircuit, Rocket, Zap, BookOpen, ShieldCheck, HelpCircle, LogOut } from 'lucide-react';
+import { Search, Info, TrendingUp, BarChart3, CreditCard, User, Bell, ChevronLeft, ChevronRight, Share2, MoreVertical, Globe, Calendar, Clock, DollarSign, PieChart, LayoutDashboard, LayoutGrid, List, Filter, RefreshCw, Send, BrainCircuit, Rocket, Zap, BookOpen, ShieldCheck, HelpCircle, LogOut, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ResultCard from './components/ResultCard';
 import BooksSection from './components/BooksSection';

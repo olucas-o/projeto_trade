@@ -7,4 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Faltam variáveis de ambiente do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY).');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+export const supabase = createClient(
+  supabaseUrl || 'https://xxxxxxxxxxxxxx.supabase.co', 
+  supabaseAnonKey || 'public-anon-key'
+);

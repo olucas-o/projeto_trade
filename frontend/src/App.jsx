@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ResultCard from './components/ResultCard';
 import BooksSection from './components/BooksSection';
 import AiSection from './components/AiSection';
+import AuthModal from './components/AuthModal';
+import { useAuth } from './context/AuthContext';
+import { supabase } from './lib/supabase';
 
 const App = () => {
     const [currentTab, setCurrentTab] = useState('inicio');
@@ -13,9 +16,24 @@ const App = () => {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const { user, signOut } = useAuth();
 
     const handleAnalyze = async (e) => {
         e.preventDefault();
+
+        // -----------------------------------------
+        // GATEKEEPER - RESTRIÇÃO DE ACESSO (PAYWALL)
+        // -----------------------------------------
+        if (!user) {
+            const anonUses = parseInt(localStorage.getItem('trader_ai_anon_uses') || '0', 10);
+            if (anonUses >= 1) {
+                // Usuário não logado já usou sua tentativa gratuita.
+                setIsAuthModalOpen(true);
+                return;
+            }
+        }
+
         setLoading(true);
         setError(null);
         setResults([]);
@@ -24,10 +42,19 @@ const App = () => {
             // Remove pontinhos soltos como '....' que o usuário deixou no input
             const cleanedTickers = tickers.replace(/\.{2,}/g, '').trim();
 
+            // Pega o token JWT se o usuário estiver logado
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
             const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
             const response = await fetch(`${apiUrl}/analyze`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ tickers: cleanedTickers, trade_type: tradeType }),
             });
 
@@ -47,6 +74,12 @@ const App = () => {
                 setResults([]);
             } else {
                 setResults(data.results);
+                
+                // Registra o uso se a chamada teve sucesso e for anônimo
+                if (!user) {
+                    const currentUses = parseInt(localStorage.getItem('trader_ai_anon_uses') || '0', 10);
+                    localStorage.setItem('trader_ai_anon_uses', (currentUses + 1).toString());
+                }
             }
         } catch (err) {
             setError(err.message);
@@ -92,11 +125,39 @@ const App = () => {
                     <a href="#" onClick={(e) => { e.preventDefault(); setCurrentTab('inicio'); }} style={{ color: currentTab === 'inicio' ? 'var(--accent-primary)' : 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', fontWeight: currentTab === 'inicio' ? '700' : '500', transition: 'color 0.2s' }}>Início</a>
                     <a href="#" onClick={(e) => { e.preventDefault(); setCurrentTab('ia'); }} style={{ color: currentTab === 'ia' ? 'var(--accent-primary)' : 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', fontWeight: currentTab === 'ia' ? '700' : '500', transition: 'color 0.2s' }}>Como Funciona</a>
                     <a href="#" onClick={(e) => { e.preventDefault(); setCurrentTab('livros'); }} style={{ color: currentTab === 'livros' ? 'var(--accent-primary)' : 'var(--text-secondary)', textDecoration: 'none', fontSize: '1rem', fontWeight: currentTab === 'livros' ? '700' : '500', transition: 'color 0.2s' }}>Livros</a>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--bg-tertiary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <User size={20} color="var(--accent-primary)" />
-                    </div>
+                    
+                    {user ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{user.email}</span>
+                            <button 
+                                onClick={() => signOut()}
+                                style={{ background: 'none', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.9rem' }}
+                                title="Sair"
+                            >
+                                <LogOut size={18} />
+                            </button>
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={() => setIsAuthModalOpen(true)}
+                            style={{ 
+                                background: 'transparent',
+                                border: '1px solid var(--accent-primary)',
+                                color: 'var(--accent-primary)',
+                                padding: '0.5rem 1.2rem',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            Entrar
+                        </button>
+                    )}
                 </div>
             </nav>
+
+            <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
 
             {currentTab === 'inicio' ? (
                 <>

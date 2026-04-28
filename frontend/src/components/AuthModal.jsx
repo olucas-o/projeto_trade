@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, X, AlertCircle } from 'lucide-react';
+import { Mail, Lock, X, AlertCircle, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AuthModal = ({ isOpen, onClose }) => {
     const { signIn, signUp } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
+    const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [msg, setMsg] = useState('');
     const [loading, setLoading] = useState(false);
@@ -26,9 +28,12 @@ const AuthModal = ({ isOpen, onClose }) => {
                 if (error) throw error;
                 onClose();
             } else {
-                const { error, data } = await signUp(email, password);
+                if (password !== confirmPassword) {
+                    throw new Error('As senhas não coincidem. Por favor, digite senhas iguais.');
+                }
+                const { error, data } = await signUp(email, password, name);
                 if (error) throw error;
-                setMsg('Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta antes de fazer login.');
+                setMsg('Cadastro realizado! Por favor, verifique seu e-mail para confirmar a conta antes de fazer login (verifique também o seu spam).');
                 setIsLogin(true);
             }
         } catch (err) {
@@ -43,7 +48,6 @@ const AuthModal = ({ isOpen, onClose }) => {
                 errorMessage = err.message;
             }
             
-            // Check for unmapped Firebase errors in message
             if (errorMessage.includes('auth/')) {
                  errorMessage = 'Erro de autenticação. Verifique os dados inseridos.';
             }
@@ -53,6 +57,21 @@ const AuthModal = ({ isOpen, onClose }) => {
             setLoading(false);
         }
     };
+
+    const inputStyle = {
+        width: '100%', 
+        boxSizing: 'border-box',
+        padding: '0.85rem 1rem',
+        fontSize: '1rem',
+        borderRadius: '8px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+        color: 'var(--text-primary)',
+        outline: 'none',
+        transition: 'all 0.3s ease'
+    };
+
+    const labelStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' };
 
     return (
         <div style={{
@@ -94,8 +113,24 @@ const AuthModal = ({ isOpen, onClose }) => {
                 )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {!isLogin && (
+                        <div>
+                            <label style={labelStyle}>
+                                <User size={16} /> Nome Completo
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                style={inputStyle}
+                                placeholder="Seu nome"
+                            />
+                        </div>
+                    )}
+
                     <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                        <label style={labelStyle}>
                             <Mail size={16} /> E-mail
                         </label>
                         <input
@@ -103,12 +138,12 @@ const AuthModal = ({ isOpen, onClose }) => {
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            style={{ width: '100%', boxSizing: 'border-box' }}
+                            style={inputStyle}
                             placeholder="seu@email.com"
                         />
                     </div>
                     <div>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
+                        <label style={labelStyle}>
                             <Lock size={16} /> Senha
                         </label>
                         <input
@@ -116,10 +151,26 @@ const AuthModal = ({ isOpen, onClose }) => {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            style={{ width: '100%', boxSizing: 'border-box' }}
+                            style={inputStyle}
                             placeholder="••••••••"
                         />
                     </div>
+
+                    {!isLogin && (
+                        <div>
+                            <label style={labelStyle}>
+                                <Lock size={16} /> Confirmar Senha
+                            </label>
+                            <input
+                                type="password"
+                                required
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                style={inputStyle}
+                                placeholder="••••••••"
+                            />
+                        </div>
+                    )}
 
                     <button 
                         type="submit" 
@@ -136,7 +187,8 @@ const AuthModal = ({ isOpen, onClose }) => {
 
                 <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
                     <button 
-                        onClick={() => { setIsLogin(!isLogin); setError(''); setMsg(''); }}
+                        type="button"
+                        onClick={() => { setIsLogin(!isLogin); setError(''); setMsg(''); setName(''); setConfirmPassword(''); }}
                         style={{ background: 'none', border: 'none', color: 'var(--accent-secondary)', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem' }}
                     >
                         {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça login'}

@@ -5,7 +5,8 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     signOut as firebaseSignOut,
-    sendEmailVerification
+    sendEmailVerification,
+    updateProfile
 } from 'firebase/auth';
 
 const AuthContext = createContext();
@@ -30,9 +31,12 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
-    const signUp = async (email, password) => {
+    const signUp = async (email, password, name) => {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            if (name) {
+                await updateProfile(userCredential.user, { displayName: name });
+            }
             await sendEmailVerification(userCredential.user);
             return { user: userCredential.user, error: null };
         } catch (error) {

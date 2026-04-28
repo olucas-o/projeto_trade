@@ -126,7 +126,7 @@ const App = () => {
                     
                     {user ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{user.email}</span>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{user.displayName || user.email}</span>
                             <button 
                                 onClick={() => signOut()}
                                 style={{ background: 'none', border: 'none', color: 'var(--accent-danger)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.9rem' }}

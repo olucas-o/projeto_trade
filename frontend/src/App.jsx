@@ -6,7 +6,6 @@ import BooksSection from './components/BooksSection';
 import AiSection from './components/AiSection';
 import AuthModal from './components/AuthModal';
 import { useAuth } from './context/AuthContext';
-import { supabase } from './lib/supabase';
 
 const App = () => {
     const [currentTab, setCurrentTab] = useState('inicio');
@@ -43,8 +42,7 @@ const App = () => {
             const cleanedTickers = tickers.replace(/\.{2,}/g, '').trim();
 
             // Pega o token JWT se o usuário estiver logado
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            const token = user ? await user.getIdToken() : null;
             
             const headers = { 'Content-Type': 'application/json' };
             if (token) {

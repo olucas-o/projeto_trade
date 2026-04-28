@@ -32,7 +32,23 @@ const AuthModal = ({ isOpen, onClose }) => {
                 setIsLogin(true);
             }
         } catch (err) {
-            setError(err.message || 'Ocorreu um erro na autenticação.');
+            let errorMessage = 'Ocorreu um erro na autenticação.';
+            if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                errorMessage = 'E-mail ou senha incorretos.';
+            } else if (err.code === 'auth/email-already-in-use') {
+                errorMessage = 'Este e-mail já está em uso.';
+            } else if (err.code === 'auth/weak-password') {
+                errorMessage = 'A senha é muito fraca (mínimo 6 caracteres).';
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+            
+            // Check for unmapped Firebase errors in message
+            if (errorMessage.includes('auth/')) {
+                 errorMessage = 'Erro de autenticação. Verifique os dados inseridos.';
+            }
+
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

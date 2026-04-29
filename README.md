@@ -1,4 +1,4 @@
-# 📈 Trader AI - Análise de Ações com Inteligência Artificial
+# 📈 Trader IA - Análise de Ações com Inteligência Artificial
 
 ![Badge em Desenvolvimento](http://img.shields.io/static/v1?label=STATUS&message=EM%20DESENVOLVIMENTO&color=GREEN&style=for-the-badge)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)

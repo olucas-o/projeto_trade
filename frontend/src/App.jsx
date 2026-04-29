@@ -25,7 +25,7 @@ const App = () => {
         // GATEKEEPER - RESTRIÇÃO DE ACESSO (PAYWALL)
         // -----------------------------------------
         if (!user) {
-            const anonUses = parseInt(localStorage.getItem('trader_ai_anon_uses') || '0', 10);
+            const anonUses = parseInt(localStorage.getItem('trader_ia_anon_uses') || '0', 10);
             if (anonUses >= 1) {
                 // Usuário não logado já usou sua tentativa gratuita.
                 setIsAuthModalOpen(true);
@@ -75,8 +75,8 @@ const App = () => {
                 
                 // Registra o uso se a chamada teve sucesso e for anônimo
                 if (!user) {
-                    const currentUses = parseInt(localStorage.getItem('trader_ai_anon_uses') || '0', 10);
-                    localStorage.setItem('trader_ai_anon_uses', (currentUses + 1).toString());
+                    const currentUses = parseInt(localStorage.getItem('trader_ia_anon_uses') || '0', 10);
+                    localStorage.setItem('trader_ia_anon_uses', (currentUses + 1).toString());
                 }
             }
         } catch (err) {
@@ -116,7 +116,7 @@ const App = () => {
                     }}>
                         <Rocket size={24} />
                     </div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Trader <span style={{ color: 'var(--accent-primary)' }}>AI</span></h2>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '700', margin: 0 }}>Trader <span style={{ color: 'var(--accent-primary)' }}>IA</span></h2>
                 </div>
 
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
@@ -331,7 +331,7 @@ const App = () => {
                 color: 'var(--text-secondary)',
                 fontSize: '0.875rem'
             }}>
-                <p>&copy; 2026 Trader AI - Baseado em Teoria de Candlesticks Profissional</p>
+                <p>&copy; 2026 Trader IA - Baseado em Teoria de Candlesticks Profissional</p>
             </footer>
         </div>
     );

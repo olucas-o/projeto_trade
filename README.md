@@ -88,4 +88,3 @@ O projeto conta com um script administrativo em `scripts/cleanup_firebase_users.
 **Disclaimer:** Este projeto é estritamente educacional e foi desenvolvido para compor um portfólio técnico. As análises geradas pela Inteligência Artificial não configuram recomendação oficial de investimento. Opere no mercado financeiro por sua própria conta e risco.
 
 ---
-Feito por [Seu Nome](https://github.com/SEU_USUARIO).
